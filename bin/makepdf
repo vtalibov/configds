@@ -1,0 +1,40 @@
+#!/bin/sh
+
+#
+# Compile a document and produce .pdf file.
+# Supports LaTeX, Markdown and R Markdown.
+# Uses: pdflatex, biber, pandoc, R with rmarkdown
+# package.
+#
+
+fullname=$(realpath "$1")
+#dir=$(dirname "$fullname") # dirname gives relative dir
+dir=${fullname%/*}
+basename=${fullname%.*}
+ext="${fullname##*.}"
+
+latex() {
+    pdflatex --output-directory="$dir" "$fullname" && \
+    biber --input-directory="$dir" "$basename" && \
+    pdflatex --output-directory="$dir" "$fullname" && \
+    pdflatex --output-directory="$dir" "$fullname"
+}
+
+markdown() {
+    pandoc -o "$basename".pdf "$fullname"
+}
+
+rmarkdown() {
+    Rscript -e "rmarkdown::render('$fullname')"
+}
+
+case "$ext" in
+    tex)
+        latex
+        ;;
+    md)
+        markdown
+        ;;
+    [rR]md)
+        rmarkdown
+esac
